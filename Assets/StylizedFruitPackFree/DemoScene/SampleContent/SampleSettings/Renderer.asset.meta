@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: eb7f9ffc1f6e0f64bbc81ecdcd343442
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 393268
+  packageName: Stylized Fruit Pack Free
+  packageVersion: 1.0
+  assetPath: Assets/StylizedFruitPackFree/DemoScene/SampleContent/SampleSettings/Renderer.asset
+  uploadId: 957426
