@@ -2859,6 +2859,14 @@ MonoBehaviour:
   callDistance: 2.5
   trustLevel: 0
   trustRequiredToFollow: 1
+  foodSearchRadius: 12
+  foodEatDistance: 1.5
+  foodSearchInterval: 2
+  worldFoodBiteDuration: 2
+  hunger: 60
+  hungerDecreaseRate: 1
+  hungerThreshold: 35
+  hungerRestoredByFood: 50
   speedParameter: Speed
   runningParameter: IsRunning
   biteParameter: Bite
@@ -10878,10 +10886,16 @@ MonoBehaviour:
   - {fileID: 2777161276742527360, guid: 9cca14245dc3b8c4680224ef31c60956, type: 3}
   - {fileID: 5593233953924132661, guid: 9cb49f2c5158ff440aabd6ef5110683d, type: 3}
   - {fileID: 9222411555225042296, guid: 828570726b6be9741b6d1e99d5cdadb3, type: 3}
+  terrain: {fileID: 463802676}
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  raycastHeight: 200
+  raycastDistance: 500
+  spawnHeightOffset: 0.05
   fruitCount: 50
   spawnRadius: 50
   minDistanceBetweenFruits: 3
-  spawnHeightOffset: 0
   useNavMesh: 0
   randomRotation: 1
   maxAttemptsPerFruit: 30
@@ -10896,7 +10910,7 @@ Transform:
   m_GameObject: {fileID: 541001976}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 473, y: 212, z: 547.3307}
+  m_LocalPosition: {x: 575.09735, y: 180.24156, z: 542.48004}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

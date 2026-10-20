@@ -1,3 +1,4 @@
+# Unity generated folders
 [Ll]ibrary/
 [Tt]emp/
 [Oo]bj/
@@ -7,3 +8,12 @@
 [Uu]ser[Ss]ettings/
 .vs/
 .gradle/
+
+# IDE and Solution files (ADD THESE IF MISSING)
+*.csproj
+*.unityproj
+*.sln
+*.slnx
+*.suo
+*.user
+*.userprefs

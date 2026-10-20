@@ -11,7 +11,8 @@ public class WolfWander : MonoBehaviour
         Rest,
         Feed,
         Called,
-        Follow
+        Follow,
+        SeekFood
     }
 
     [Header("State")]
@@ -32,6 +33,16 @@ public class WolfWander : MonoBehaviour
     public int trustLevel = 0;
     public int trustRequiredToFollow = 3;
 
+    [Header("World Food")]
+    public float foodSearchRadius = 12f;
+    public float foodEatDistance = 1.5f;
+    public float foodSearchInterval = 2f;
+    public float worldFoodBiteDuration = 2f;
+    public float hunger = 60f;
+    public float hungerDecreaseRate = 1f;
+    public float hungerThreshold = 35f;
+    public float hungerRestoredByFood = 50f;
+
     [Header("Animation")]
     public string speedParameter = "Speed";
     public string runningParameter = "IsRunning";
@@ -48,9 +59,13 @@ public class WolfWander : MonoBehaviour
 
     private float stateTimer;
     private float destinationTimer;
+    private float foodSearchTimer;
 
     private bool initialized;
     private bool companionActive;
+    private bool eatingWorldFood;
+
+    private GameObject foodTarget;
 
     void Start()
     {
@@ -80,7 +95,6 @@ public class WolfWander : MonoBehaviour
         }
 
         initialized = true;
-
         agent.speed = walkSpeed;
 
         animator.SetFloat(speedParameter, 0f);
@@ -94,17 +108,22 @@ public class WolfWander : MonoBehaviour
         if (!initialized || !agent.isOnNavMesh)
             return;
 
-        // H calls or releases the wolf after sufficient trust.
+        hunger = Mathf.Clamp(
+            hunger - hungerDecreaseRate * Time.deltaTime,
+            0f, 100f);
+
         if (Keyboard.current != null &&
             Keyboard.current.hKey.wasPressedThisFrame &&
             player != null &&
-            trustLevel >= trustRequiredToFollow)
+            trustLevel >= trustRequiredToFollow &&
+            currentState != WolfState.SeekFood &&
+            !(currentState == WolfState.Feed && eatingWorldFood))
         {
             ToggleCompanion();
         }
 
-        // E feeds the wolf when the player is nearby.
         if (currentState != WolfState.Feed &&
+            currentState != WolfState.SeekFood &&
             player != null &&
             Keyboard.current != null &&
             Keyboard.current.eKey.wasPressedThisFrame &&
@@ -113,6 +132,23 @@ public class WolfWander : MonoBehaviour
         {
             StartFeeding();
             return;
+        }
+
+        // Search for world food while wandering or resting.
+        if (!companionActive &&
+            hunger <= hungerThreshold &&
+            (currentState == WolfState.Wander ||
+             currentState == WolfState.Rest))
+        {
+            foodSearchTimer += Time.deltaTime;
+
+            if (foodSearchTimer >= foodSearchInterval)
+            {
+                foodSearchTimer = 0f;
+
+                if (FindNearbyFood())
+                    return;
+            }
         }
 
         UpdateAnimation();
@@ -138,6 +174,10 @@ public class WolfWander : MonoBehaviour
             case WolfState.Follow:
                 UpdateFollow();
                 break;
+
+            case WolfState.SeekFood:
+                UpdateSeekFood();
+                break;
         }
     }
 
@@ -149,21 +189,15 @@ public class WolfWander : MonoBehaviour
         float movement = agent.velocity.magnitude;
         bool moving = movement > 0.1f;
 
-        // Run only while the wolf is travelling toward the player.
         bool shouldRun =
             currentState == WolfState.Called &&
             companionActive &&
             moving;
 
         animator.SetFloat(
-            speedParameter,
-            moving ? 1f : 0f
-        );
+            speedParameter, moving ? 1f : 0f);
 
-        animator.SetBool(
-            runningParameter,
-            shouldRun
-        );
+        animator.SetBool(runningParameter, shouldRun);
     }
 
     void ToggleCompanion()
@@ -172,16 +206,15 @@ public class WolfWander : MonoBehaviour
 
         if (companionActive)
         {
+            foodTarget = null;
             agent.speed = runSpeed;
             EnterState(WolfState.Called);
-
             Debug.Log("Wolf called to player!");
         }
         else
         {
             agent.speed = walkSpeed;
             EnterState(WolfState.Wander);
-
             Debug.Log("Wolf released to wander.");
         }
     }
@@ -204,7 +237,6 @@ public class WolfWander : MonoBehaviour
             case WolfState.Rest:
                 agent.isStopped = true;
                 agent.ResetPath();
-
                 animator.SetFloat(speedParameter, 0f);
                 animator.SetBool(runningParameter, false);
                 break;
@@ -212,10 +244,8 @@ public class WolfWander : MonoBehaviour
             case WolfState.Feed:
                 agent.isStopped = true;
                 agent.ResetPath();
-
                 animator.SetFloat(speedParameter, 0f);
                 animator.SetBool(runningParameter, false);
-
                 animator.ResetTrigger(biteParameter);
                 animator.SetTrigger(biteParameter);
                 break;
@@ -231,6 +261,97 @@ public class WolfWander : MonoBehaviour
                 agent.speed = walkSpeed;
                 animator.SetBool(runningParameter, false);
                 break;
+
+            case WolfState.SeekFood:
+                agent.isStopped = false;
+                agent.speed = walkSpeed;
+                animator.SetBool(runningParameter, false);
+                break;
+        }
+    }
+
+    bool FindNearbyFood()
+    {
+        GameObject[] fruits;
+
+        try
+        {
+            fruits = GameObject.FindGameObjectsWithTag("Fruit");
+        }
+        catch (UnityException)
+        {
+            Debug.LogError("Create the Fruit tag in Unity.");
+            return false;
+        }
+
+        float closestDistance = foodSearchRadius;
+        GameObject closestFruit = null;
+
+        foreach (GameObject fruit in fruits)
+        {
+            if (fruit == null)
+                continue;
+
+            float distance = Vector3.Distance(
+                transform.position, fruit.transform.position);
+
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestFruit = fruit;
+            }
+        }
+
+        if (closestFruit == null)
+            return false;
+
+        foodTarget = closestFruit;
+        EnterState(WolfState.SeekFood);
+
+        agent.SetDestination(foodTarget.transform.position);
+
+        Debug.Log("Wolf found fruit and is moving towards it.");
+        return true;
+    }
+
+    void UpdateSeekFood()
+    {
+        if (companionActive)
+        {
+            foodTarget = null;
+            EnterState(WolfState.Called);
+            return;
+        }
+
+        if (foodTarget == null)
+        {
+            EnterState(WolfState.Wander);
+            return;
+        }
+
+        destinationTimer += Time.deltaTime;
+
+        if (destinationTimer >= destinationUpdateRate)
+        {
+            destinationTimer = 0f;
+
+            agent.isStopped = false;
+            agent.SetDestination(foodTarget.transform.position);
+        }
+
+        float distance = Vector3.Distance(
+            transform.position, foodTarget.transform.position);
+
+        if (distance <= foodEatDistance)
+        {
+            eatingWorldFood = true;
+            EnterState(WolfState.Feed);
+        }
+        else if (!agent.pathPending &&
+                 agent.pathStatus == NavMeshPathStatus.PathInvalid)
+        {
+            foodTarget = null;
+            EnterState(WolfState.Wander);
         }
     }
 
@@ -250,7 +371,8 @@ public class WolfWander : MonoBehaviour
 
     void StartFeeding()
     {
-        // If an inventory exists, feeding consumes one berry.
+        eatingWorldFood = false;
+
         if (foodInventory != null)
         {
             if (!foodInventory.TryConsumeBerry())
@@ -268,19 +390,38 @@ public class WolfWander : MonoBehaviour
     {
         stateTimer += Time.deltaTime;
 
-        if (stateTimer >= biteDuration)
+        float duration = eatingWorldFood
+            ? worldFoodBiteDuration
+            : biteDuration;
+
+        if (stateTimer < duration)
+            return;
+
+        if (eatingWorldFood)
         {
-            trustLevel++;
+            if (foodTarget != null)
+                Destroy(foodTarget);
 
-            Debug.Log("Wolf trust: " + trustLevel);
+            foodTarget = null;
+            hunger = Mathf.Clamp(
+                hunger + hungerRestoredByFood, 0f, 100f);
 
-            if (trustLevel >= trustRequiredToFollow)
-            {
-                Debug.Log("Wolf trusts you! Press H to call it.");
-            }
+            eatingWorldFood = false;
+
+            Debug.Log("Wolf ate wild fruit. Hunger: " + hunger);
 
             EnterState(WolfState.Rest);
+            return;
         }
+
+        trustLevel++;
+
+        Debug.Log("Wolf trust: " + trustLevel);
+
+        if (trustLevel >= trustRequiredToFollow)
+            Debug.Log("Wolf trusts you! Press H to call it.");
+
+        EnterState(WolfState.Rest);
     }
 
     void UpdateCalled()
@@ -295,9 +436,7 @@ public class WolfWander : MonoBehaviour
             destinationTimer = 0f;
 
             float distance = Vector3.Distance(
-                transform.position,
-                player.position
-            );
+                transform.position, player.position);
 
             if (distance > callDistance)
             {
@@ -324,9 +463,7 @@ public class WolfWander : MonoBehaviour
             destinationTimer = 0f;
 
             float distance = Vector3.Distance(
-                transform.position,
-                player.position
-            );
+                transform.position, player.position);
 
             if (distance > followDistance)
             {
@@ -338,7 +475,6 @@ public class WolfWander : MonoBehaviour
             {
                 agent.isStopped = true;
                 agent.ResetPath();
-
                 animator.SetFloat(speedParameter, 0f);
                 animator.SetBool(runningParameter, false);
             }
@@ -362,10 +498,8 @@ public class WolfWander : MonoBehaviour
             Random.insideUnitSphere * wanderRadius;
 
         if (NavMesh.SamplePosition(
-            randomPoint,
-            out NavMeshHit hit,
-            wanderRadius,
-            NavMesh.AllAreas))
+            randomPoint, out NavMeshHit hit,
+            wanderRadius, NavMesh.AllAreas))
         {
             agent.isStopped = false;
             agent.speed = walkSpeed;

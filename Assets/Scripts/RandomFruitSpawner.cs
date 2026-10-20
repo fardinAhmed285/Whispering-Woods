@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -6,14 +7,20 @@ public class RandomFruitSpawner : MonoBehaviour
     [Header("Fruit Prefabs")]
     public GameObject[] fruitPrefabs;
 
+    [Header("Ground")]
+    public Terrain terrain;
+    public LayerMask groundLayers = ~0;
+    public float raycastHeight = 200f;
+    public float raycastDistance = 500f;
+    public float spawnHeightOffset = 0.05f;
+
     [Header("Spawning")]
     public int fruitCount = 50;
     public float spawnRadius = 50f;
     public float minDistanceBetweenFruits = 3f;
-    public float spawnHeightOffset = 0f;
 
     [Header("Placement")]
-    public bool useNavMesh = true;
+    public bool useNavMesh = false;
     public bool randomRotation = true;
     public int maxAttemptsPerFruit = 30;
 
@@ -25,12 +32,16 @@ public class RandomFruitSpawner : MonoBehaviour
     {
         if (fruitPrefabs == null || fruitPrefabs.Length == 0)
         {
-            Debug.LogError("Add your fruit prefabs to RandomFruitSpawner!", this);
+            Debug.LogError(
+                "Add your fruit prefabs to RandomFruitSpawner!", this);
             return;
         }
 
         if (!useRandomSeed)
             Random.InitState(seed);
+
+        if (terrain == null)
+            terrain = Terrain.activeTerrain;
 
         SpawnFruits();
     }
@@ -39,58 +50,49 @@ public class RandomFruitSpawner : MonoBehaviour
     {
         int spawned = 0;
         int attempts = 0;
-        int maxTotalAttempts = fruitCount * maxAttemptsPerFruit;
+        int maxTotalAttempts =
+            fruitCount * Mathf.Max(1, maxAttemptsPerFruit);
 
         while (spawned < fruitCount && attempts < maxTotalAttempts)
         {
             attempts++;
 
-            Vector2 randomCircle =
+            Vector2 offset =
                 Random.insideUnitCircle * spawnRadius;
 
             Vector3 candidate = transform.position +
-                new Vector3(randomCircle.x, 0f, randomCircle.y);
+                new Vector3(offset.x, 0f, offset.y);
+
+            Vector3 groundPosition;
+
+            if (!TryGetGroundPosition(candidate, out groundPosition))
+                continue;
 
             if (useNavMesh)
             {
                 if (!NavMesh.SamplePosition(
-                    candidate,
-                    out NavMeshHit hit,
-                    5f,
+                    groundPosition,
+                    out NavMeshHit navHit,
+                    2f,
                     NavMesh.AllAreas))
                 {
                     continue;
                 }
 
-                candidate = hit.position;
-            }
-            else
-            {
-                // Raycast down to find the ground.
-                Vector3 rayOrigin = candidate + Vector3.up * 100f;
-
-                if (Physics.Raycast(
-                    rayOrigin,
-                    Vector3.down,
-                    out RaycastHit groundHit,
-                    200f))
-                {
-                    candidate = groundHit.point;
-                }
-                else
+                // Keep the actual ground height, not the NavMesh height.
+                if (Vector3.Distance(
+                    navHit.position, groundPosition) > 2f)
                 {
                     continue;
                 }
             }
-
-            candidate.y += spawnHeightOffset;
 
             bool tooClose = false;
 
             foreach (Transform child in transform)
             {
                 if (Vector3.Distance(
-                    child.position, candidate) <
+                    child.position, groundPosition) <
                     minDistanceBetweenFruits)
                 {
                     tooClose = true;
@@ -105,10 +107,19 @@ public class RandomFruitSpawner : MonoBehaviour
                 Random.Range(0, fruitPrefabs.Length)];
 
             Quaternion rotation = randomRotation
-                ? Quaternion.Euler(0f, Random.Range(0f, 360f), 0f)
+                ? Quaternion.Euler(
+                    0f, Random.Range(0f, 360f), 0f)
                 : prefab.transform.rotation;
 
-            Instantiate(prefab, candidate, rotation, transform);
+            Vector3 spawnPosition = groundPosition;
+            spawnPosition.y += spawnHeightOffset;
+
+            GameObject fruit = Instantiate(
+                prefab, spawnPosition, rotation, transform);
+
+            // Ensure spawned fruit can be detected by the wolf.
+            if (!fruit.CompareTag("Fruit"))
+                fruit.tag = "Fruit";
 
             spawned++;
         }
@@ -116,5 +127,56 @@ public class RandomFruitSpawner : MonoBehaviour
         Debug.Log(
             "Fruit spawning complete. Spawned " +
             spawned + " of " + fruitCount + " fruits.", this);
+    }
+
+    bool TryGetGroundPosition(
+        Vector3 candidate, out Vector3 groundPosition)
+    {
+        groundPosition = candidate;
+
+        // Prefer the actual Terrain surface height.
+        if (terrain != null)
+        {
+            Vector3 local = candidate - terrain.transform.position;
+            TerrainData data = terrain.terrainData;
+            Vector3 size = data.size;
+
+            if (local.x >= 0f && local.x <= size.x &&
+                local.z >= 0f && local.z <= size.z)
+            {
+                float normalizedX = local.x / size.x;
+                float normalizedZ = local.z / size.z;
+
+                float height = data.GetInterpolatedHeight(
+                    normalizedX, normalizedZ);
+
+                groundPosition = new Vector3(
+                    candidate.x,
+                    terrain.transform.position.y + height,
+                    candidate.z);
+
+                return true;
+            }
+        }
+
+        // Fallback for non-Terrain ground surfaces.
+        Vector3 rayOrigin = new Vector3(
+            candidate.x,
+            candidate.y + raycastHeight,
+            candidate.z);
+
+        if (Physics.Raycast(
+            rayOrigin,
+            Vector3.down,
+            out RaycastHit hit,
+            raycastDistance,
+            groundLayers,
+            QueryTriggerInteraction.Ignore))
+        {
+            groundPosition = hit.point;
+            return true;
+        }
+
+        return false;
     }
 }
