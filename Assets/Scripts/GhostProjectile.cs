@@ -133,4 +133,17 @@ public class GhostProjectile : MonoBehaviour
         launched = false;
         Destroy(gameObject);
     }
+
+
+    public void LaunchAtEnemyPoint(Vector3 point)
+    {
+        target = null;
+        targetPoint = point;
+        launched = true;
+        firedByPlayer = true;
+
+        PlayParticles();
+        Destroy(gameObject, lifetime);
+    }
+
 }
