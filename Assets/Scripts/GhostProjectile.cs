@@ -1,23 +1,41 @@
+
 using UnityEngine;
 
 public class GhostProjectile : MonoBehaviour
 {
-    public float speed = 6f;
+    public float speed = 4f;
     public float damage = 10f;
-    public float lifetime = 5f;
+    public float lifetime = 10f;
 
     private Transform target;
     private Vector3 targetPoint;
     private bool launched;
-
+    private bool firedByPlayer;
 
     public void Launch(Transform player)
     {
         target = player;
         targetPoint = player.position + Vector3.up;
         launched = true;
+        firedByPlayer = false;
 
-        // Start the particle effect when the projectile is fired.
+        PlayParticles();
+        Destroy(gameObject, lifetime);
+    }
+
+    public void LaunchAtEnemy(Transform enemy)
+    {
+        target = enemy;
+        targetPoint = enemy.position + Vector3.up;
+        launched = true;
+        firedByPlayer = true;
+
+        PlayParticles();
+        Destroy(gameObject, lifetime);
+    }
+
+    void PlayParticles()
+    {
         ParticleSystem[] particles =
             GetComponentsInChildren<ParticleSystem>(true);
 
@@ -25,10 +43,7 @@ public class GhostProjectile : MonoBehaviour
         {
             ps.Play(true);
         }
-
-        Destroy(gameObject, lifetime);
     }
-
 
     void Update()
     {
@@ -42,7 +57,7 @@ public class GhostProjectile : MonoBehaviour
 
         if (direction.sqrMagnitude < 0.25f)
         {
-            HitPlayer();
+            HitTarget();
             return;
         }
 
@@ -61,31 +76,61 @@ public class GhostProjectile : MonoBehaviour
         if (!launched)
             return;
 
-        PlayerHealth health =
-            other.GetComponentInParent<PlayerHealth>();
-
-        if (health != null)
+        if (firedByPlayer)
         {
-            HitPlayer();
+            EnemyHealth health =
+                other.GetComponentInParent<EnemyHealth>();
+
+            if (health != null)
+            {
+                health.TakeDamage(damage);
+                DestroyProjectile();
+            }
+        }
+        else
+        {
+            PlayerHealth health =
+                other.GetComponentInParent<PlayerHealth>();
+
+            if (health != null)
+            {
+                health.TakeDamage(damage);
+                DestroyProjectile();
+            }
         }
     }
 
-    void HitPlayer()
+    void HitTarget()
     {
         if (!launched)
             return;
 
-        launched = false;
-
         if (target != null)
         {
-            PlayerHealth health =
-                target.GetComponentInParent<PlayerHealth>();
+            if (firedByPlayer)
+            {
+                EnemyHealth health =
+                    target.GetComponentInParent<EnemyHealth>();
 
-            if (health != null)
-                health.TakeDamage(damage);
+                if (health != null)
+                    health.TakeDamage(damage);
+            }
+            else
+            {
+                PlayerHealth health =
+                    target.GetComponentInParent<PlayerHealth>();
+
+                if (health != null)
+                    health.TakeDamage(damage);
+            }
         }
 
+        DestroyProjectile();
+    }
+
+    void DestroyProjectile()
+    {
+        launched = false;
         Destroy(gameObject);
     }
 }
