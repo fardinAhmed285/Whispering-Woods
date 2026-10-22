@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class GhostProjectile : MonoBehaviour
 {
-    public float speed = 4f;
+    public float speed = 8f;
     public float damage = 10f;
     public float lifetime = 10f;
 
@@ -11,43 +11,31 @@ public class GhostProjectile : MonoBehaviour
     private Vector3 targetPoint;
     private bool launched;
     private bool firedByPlayer;
+    private bool hasHit;
 
     public void Launch(Transform player)
     {
         target = player;
         targetPoint = player.position + Vector3.up;
-        launched = true;
         firedByPlayer = false;
-
-        PlayParticles();
-        Destroy(gameObject, lifetime);
-    }
-
-    public void LaunchAtEnemy(Transform enemy)
-    {
-        target = enemy;
-        targetPoint = enemy.position + Vector3.up;
         launched = true;
-        firedByPlayer = true;
 
-        PlayParticles();
         Destroy(gameObject, lifetime);
     }
 
-    void PlayParticles()
+    public void LaunchAtEnemyPoint(Vector3 point)
     {
-        ParticleSystem[] particles =
-            GetComponentsInChildren<ParticleSystem>(true);
+        target = null;
+        targetPoint = point;
+        firedByPlayer = true;
+        launched = true;
 
-        foreach (ParticleSystem ps in particles)
-        {
-            ps.Play(true);
-        }
+        Destroy(gameObject, lifetime);
     }
 
     void Update()
     {
-        if (!launched)
+        if (!launched || hasHit)
             return;
 
         if (target != null)
@@ -55,7 +43,7 @@ public class GhostProjectile : MonoBehaviour
 
         Vector3 direction = targetPoint - transform.position;
 
-        if (direction.sqrMagnitude < 0.25f)
+        if (direction.sqrMagnitude <= 0.16f)
         {
             HitTarget();
             return;
@@ -73,7 +61,7 @@ public class GhostProjectile : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (!launched)
+        if (!launched || hasHit)
             return;
 
         if (firedByPlayer)
@@ -84,7 +72,7 @@ public class GhostProjectile : MonoBehaviour
             if (health != null)
             {
                 health.TakeDamage(damage);
-                DestroyProjectile();
+                Destroy(gameObject);
             }
         }
         else
@@ -95,15 +83,18 @@ public class GhostProjectile : MonoBehaviour
             if (health != null)
             {
                 health.TakeDamage(damage);
-                DestroyProjectile();
+                Destroy(gameObject);
             }
         }
     }
 
     void HitTarget()
     {
-        if (!launched)
+        if (hasHit)
             return;
+
+        hasHit = true;
+        launched = false;
 
         if (target != null)
         {
@@ -125,25 +116,6 @@ public class GhostProjectile : MonoBehaviour
             }
         }
 
-        DestroyProjectile();
-    }
-
-    void DestroyProjectile()
-    {
-        launched = false;
         Destroy(gameObject);
     }
-
-
-    public void LaunchAtEnemyPoint(Vector3 point)
-    {
-        target = null;
-        targetPoint = point;
-        launched = true;
-        firedByPlayer = true;
-
-        PlayParticles();
-        Destroy(gameObject, lifetime);
-    }
-
 }

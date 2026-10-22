@@ -1,32 +1,33 @@
+
 using UnityEngine;
 
 public class CrosshairUI : MonoBehaviour
 {
-    public float size = 8f;
-    public float thickness = 2f;
-    public float gap = 4f;
+    public float size = 5f;
+    public float thickness = 1.5f;
+    public float gap = 3f;
 
     void OnGUI()
     {
-        float x = Screen.width / 2f;
-        float y = Screen.height / 2f;
+        float x = Screen.width * 0.5f;
+        float y = Screen.height * 0.5f;
 
-        GUI.color = Color.white;
-
-        GUI.DrawTexture(
-            new Rect(x - thickness / 2f, y - gap - size,
-                     thickness, size), Texture2D.whiteTexture);
+        GUI.color = Color.cyan;
 
         GUI.DrawTexture(
-            new Rect(x - thickness / 2f, y + gap,
-                     thickness, size), Texture2D.whiteTexture);
+            new Rect(x - thickness / 2, y - gap - size,
+                thickness, size), Texture2D.whiteTexture);
 
         GUI.DrawTexture(
-            new Rect(x - gap - size, y - thickness / 2f,
-                     size, thickness), Texture2D.whiteTexture);
+            new Rect(x - thickness / 2, y + gap,
+                thickness, size), Texture2D.whiteTexture);
 
         GUI.DrawTexture(
-            new Rect(x + gap, y - thickness / 2f,
-                     size, thickness), Texture2D.whiteTexture);
+            new Rect(x - gap - size, y - thickness / 2,
+                size, thickness), Texture2D.whiteTexture);
+
+        GUI.DrawTexture(
+            new Rect(x + gap, y - thickness / 2,
+                size, thickness), Texture2D.whiteTexture);
     }
 }
