@@ -1,6 +1,7 @@
 
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -10,6 +11,13 @@ public class PlayerHealth : MonoBehaviour
     [Header("Health Bar")]
     public Slider healthBar;
 
+    [Header("Damage Feedback")]
+    public Image damageFlash;
+    public float flashDuration = 0.2f;
+    public float flashAlpha = 0.35f;
+
+    private Coroutine flashCoroutine;
+
     void Start()
     {
         currentHealth = maxHealth;
@@ -18,6 +26,13 @@ public class PlayerHealth : MonoBehaviour
         {
             healthBar.maxValue = maxHealth;
             healthBar.value = currentHealth;
+        }
+
+        if (damageFlash != null)
+        {
+            Color color = damageFlash.color;
+            color.a = 0f;
+            damageFlash.color = color;
         }
     }
 
@@ -32,9 +47,31 @@ public class PlayerHealth : MonoBehaviour
             healthBar.value = currentHealth;
         }
 
+        if (damageFlash != null)
+        {
+            if (flashCoroutine != null)
+                StopCoroutine(flashCoroutine);
+
+            flashCoroutine = StartCoroutine(FlashScreen());
+        }
+
         if (currentHealth <= 0f)
         {
             Debug.Log("Player defeated!");
         }
+    }
+
+    IEnumerator FlashScreen()
+    {
+        Color color = damageFlash.color;
+        color.a = flashAlpha;
+        damageFlash.color = color;
+
+        yield return new WaitForSeconds(flashDuration);
+
+        color.a = 0f;
+        damageFlash.color = color;
+
+        flashCoroutine = null;
     }
 }
