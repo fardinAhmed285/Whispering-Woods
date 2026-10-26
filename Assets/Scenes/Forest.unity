@@ -9845,11 +9845,7 @@ MonoBehaviour:
   projectilePrefab: {fileID: 684807467838625629, guid: 4ab3ca5148c5de3419c847bd8892a609, type: 3}
   firePoint: {fileID: 1571020018}
   projectileDamage: 10
-  attackFlashColor:
-    r: 1
-    g: 0
-    b: 0
-    a: 1
+  attackFlashColor: {r: 1, g: 0, b: 0, a: 1}
   flashDuration: 0.25
   animator: {fileID: 0}
   speedParameter: Speed
@@ -17881,63 +17877,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8058138381990199971, guid: 683bacc4d3c02ff4897779f9c7e08ece, type: 3}
   m_PrefabInstance: {fileID: 801406413}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &803595818
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 2060666427496675642, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_Name
-      value: Campfire (1)
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 575.09735
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 180.24156
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 542.48004
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
 --- !u!1001 &815707465
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -33437,7 +33376,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: -1.8100586}
+  m_AnchoredPosition: {x: 0, y: -1.8099976}
   m_SizeDelta: {x: 250, y: 15}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1391259528
@@ -42665,6 +42604,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1657fe5f9a5a842478d014b9d05aeaef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GuardianInteraction
+  apiKey: 
   model: gemini-3.5-flash-lite
   dialoguePanel: {fileID: 1857549513}
   dialogueText: {fileID: 1047603156}
@@ -52426,63 +52366,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3301189352258888705, guid: 84cab6f85aba65f4db373d6b59a2ae06, type: 3}
   m_PrefabInstance: {fileID: 2146485409}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &7871184517546490606
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 2060666427496675642, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_Name
-      value: Campfire
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 579.0974
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 180.24156
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 542.48004
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2753507172960472269, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 4aa48990a83554f74971874db9e7682e, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -52502,5 +52385,3 @@ SceneRoots:
   - {fileID: 1814171956}
   - {fileID: 923474548}
   - {fileID: 1842540615}
-  - {fileID: 7871184517546490606}
-  - {fileID: 803595818}

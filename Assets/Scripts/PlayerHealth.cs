@@ -70,18 +70,6 @@ public class PlayerHealth : MonoBehaviour
             Die();
     }
 
-    // Used by Campfire.cs to restore health while resting.
-    public void Heal(float amount)
-    {
-        if (isDead || amount <= 0f)
-            return;
-
-        currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
-
-        if (healthBar != null)
-            healthBar.value = currentHealth;
-    }
-
     IEnumerator FlashScreen()
     {
         Color color = damageFlash.color;

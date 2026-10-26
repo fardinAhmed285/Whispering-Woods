@@ -107,19 +107,11 @@ public class EnemyAI : MonoBehaviour
 
         attackTimer -= Time.deltaTime;
 
-        // Player resting at a campfire: ghosts forget them and go back
-        // to patrolling instead of waiting at the edge of the safe zone.
-        if (Campfire.PlayerIsSafe && currentState != EnemyState.Patrol)
-        {
-            currentState = EnemyState.Patrol;
-            ChoosePatrolDestination();
-        }
-
         switch (currentState)
         {
             case EnemyState.Patrol:
 
-                if (distance <= detectionRange && !Campfire.PlayerIsSafe)
+                if (distance <= detectionRange)
                 {
                     currentState = EnemyState.Chase;
                     destinationTimer = destinationUpdateRate;
