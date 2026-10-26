@@ -38,6 +38,14 @@ public class GhostProjectile : MonoBehaviour
         if (!launched || hasHit)
             return;
 
+        // Ghost shots fade away once the player is resting at a campfire
+        // (they home in on the player, so they would hit them otherwise).
+        if (!firedByPlayer && Campfire.PlayerIsSafe)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         if (target != null)
             targetPoint = target.position + Vector3.up;
 
