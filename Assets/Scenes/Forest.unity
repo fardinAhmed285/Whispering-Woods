@@ -2133,6 +2133,28 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3301189352258888705, guid: 84cab6f85aba65f4db373d6b59a2ae06, type: 3}
   m_PrefabInstance: {fileID: 82558388}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &88912375 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6081369657077179522, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+  m_PrefabInstance: {fileID: 878100438}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &88912377
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 88912375}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90de114ce9afce341b15df828e620f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FairyCompanion
+  player: {fileID: 1797351666}
+  followDistance: 4
+  moveSpeed: 1.5
+  hoverSpeed: 1
+  hoverRadius: 1
 --- !u!1001 &90590962
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19221,6 +19243,78 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4626931289688957555, guid: fb0582c77f0d11c4e97ca6847a098d54, type: 3}
   m_PrefabInstance: {fileID: 877223501}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &878100438
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 6081369657077179522, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_Name
+      value: Fairy_Prefab
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 575.0871
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 181.1452
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 542.7572
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809675443456163825, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6081369657077179522, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 88912377}
+  m_SourcePrefab: {fileID: 100100000, guid: cd9b097c3cb67c8459583fb68504e12f, type: 3}
 --- !u!1001 &879021132
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -42604,7 +42698,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1657fe5f9a5a842478d014b9d05aeaef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GuardianInteraction
-  apiKey: 
   model: gemini-3.5-flash-lite
   dialoguePanel: {fileID: 1857549513}
   dialogueText: {fileID: 1047603156}
@@ -52385,3 +52478,4 @@ SceneRoots:
   - {fileID: 1814171956}
   - {fileID: 923474548}
   - {fileID: 1842540615}
+  - {fileID: 878100438}
