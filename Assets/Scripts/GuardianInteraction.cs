@@ -12,9 +12,7 @@ using TMPro;
 public class GuardianInteraction : MonoBehaviour
 {
     [Header("Gemini API")]
-    [System.NonSerialized]
     public string apiKey;
-
     public string model = "gemini-3.8-flash";
 
     [Header("Dialogue UI")]
