@@ -125,4 +125,18 @@ public class PlayerHealth : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
+
+
+    public void Heal(float amount)
+    {
+        if (isDead || amount <= 0f)
+            return;
+
+        currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+
+        if (healthBar != null)
+            healthBar.value = currentHealth;
+
+        Debug.Log("Player healed: " + currentHealth);
+    }
 }

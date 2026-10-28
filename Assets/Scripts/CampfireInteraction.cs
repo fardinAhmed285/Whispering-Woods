@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -5,10 +6,11 @@ public class CampfireInteraction : MonoBehaviour
 {
     public GameObject fireEffect;
     public Light fireLight;
-    public float interactionDistance = 3f;
+    public float healPerSecond = 5f;
 
     private bool isLit = false;
     private bool playerNearby = false;
+    private PlayerHealth playerHealth;
 
     private void Start()
     {
@@ -21,23 +23,38 @@ public class CampfireInteraction : MonoBehaviour
 
     private void Update()
     {
-        if (!playerNearby || isLit || Keyboard.current == null)
-            return;
+        if (isLit && playerNearby && playerHealth != null)
+        {
+            playerHealth.Heal(healPerSecond * Time.deltaTime);
+        }
 
-        if (Keyboard.current.fKey.wasPressedThisFrame)
+        if (playerNearby && !isLit && Keyboard.current != null
+            && Keyboard.current.fKey.wasPressedThisFrame)
+        {
             LightCampfire();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        PlayerHealth health = other.GetComponentInParent<PlayerHealth>();
+
+        if (health != null)
+        {
             playerNearby = true;
+            playerHealth = health;
+        }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
+        PlayerHealth health = other.GetComponentInParent<PlayerHealth>();
+
+        if (health != null && health == playerHealth)
+        {
             playerNearby = false;
+            playerHealth = null;
+        }
     }
 
     private void LightCampfire()
