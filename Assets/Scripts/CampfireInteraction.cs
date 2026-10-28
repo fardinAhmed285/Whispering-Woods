@@ -4,9 +4,15 @@ using UnityEngine.InputSystem;
 
 public class CampfireInteraction : MonoBehaviour
 {
+    [Header("Campfire Effects")]
     public GameObject fireEffect;
     public Light fireLight;
+
+    [Header("Healing")]
     public float healPerSecond = 5f;
+
+    [Header("Manager")]
+    public CampfireManager manager;
 
     private bool isLit = false;
     private bool playerNearby = false;
@@ -19,6 +25,8 @@ public class CampfireInteraction : MonoBehaviour
 
         if (fireLight != null)
             fireLight.enabled = false;
+
+        Debug.Log("Campfire initialized. Manager assigned: " + (manager != null));
     }
 
     private void Update()
@@ -28,8 +36,9 @@ public class CampfireInteraction : MonoBehaviour
             playerHealth.Heal(healPerSecond * Time.deltaTime);
         }
 
-        if (playerNearby && !isLit && Keyboard.current != null
-            && Keyboard.current.fKey.wasPressedThisFrame)
+        if (playerNearby && !isLit &&
+            Keyboard.current != null &&
+            Keyboard.current.fKey.wasPressedThisFrame)
         {
             LightCampfire();
         }
@@ -43,6 +52,7 @@ public class CampfireInteraction : MonoBehaviour
         {
             playerNearby = true;
             playerHealth = health;
+            Debug.Log("Player entered campfire zone.");
         }
     }
 
@@ -61,12 +71,23 @@ public class CampfireInteraction : MonoBehaviour
     {
         isLit = true;
 
+        Debug.Log("Campfire relit!");
+
+        Debug.Log("Manager reference: " + (manager != null));
+
+        if (manager != null)
+        {
+            manager.RegisterCampfireLit();
+        }
+        else
+        {
+            Debug.LogError("CampfireManager is not assigned!");
+        }
+
         if (fireEffect != null)
             fireEffect.SetActive(true);
 
         if (fireLight != null)
             fireLight.enabled = true;
-
-        Debug.Log("Campfire relit!");
     }
 }
