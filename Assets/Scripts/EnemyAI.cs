@@ -16,13 +16,17 @@ public class EnemyAI : MonoBehaviour
     public Transform player;
     public string playerTag = "Player";
 
+    [Header("Campfire Orbit")]
+    public Transform patrolCenter;
+    public float orbitRadius = 3f;
+    public int orbitPoints = 8;
+
     [Header("Detection")]
-    public float detectionRange = 12f;
-    public float loseTargetRange = 18f;
+    public float detectionRange = 8f;
+    public float loseTargetRange = 12f;
 
     [Header("Movement")]
-    public float patrolRadius = 8f;
-    public float patrolWaitTime = 3f;
+    public float patrolWaitTime = 1f;
     public float destinationUpdateRate = 0.25f;
 
     [Header("Attack")]
@@ -52,6 +56,7 @@ public class EnemyAI : MonoBehaviour
     private float destinationTimer;
     private float patrolTimer;
     private float attackTimer;
+    private int currentOrbitPoint;
 
     private Renderer[] ghostRenderers;
     private Color[] originalColors;
@@ -89,7 +94,10 @@ public class EnemyAI : MonoBehaviour
                 player = playerObject.transform;
         }
 
-        patrolOrigin = transform.position;
+        patrolOrigin = patrolCenter != null
+            ? patrolCenter.position
+            : transform.position;
+
         ChoosePatrolDestination();
     }
 
@@ -110,7 +118,6 @@ public class EnemyAI : MonoBehaviour
         switch (currentState)
         {
             case EnemyState.Patrol:
-
                 if (distance <= detectionRange)
                 {
                     currentState = EnemyState.Chase;
@@ -120,11 +127,9 @@ public class EnemyAI : MonoBehaviour
                 {
                     UpdatePatrol();
                 }
-
                 break;
 
             case EnemyState.Chase:
-
                 if (distance > loseTargetRange)
                 {
                     currentState = EnemyState.Patrol;
@@ -140,11 +145,9 @@ public class EnemyAI : MonoBehaviour
                 {
                     UpdateChase();
                 }
-
                 break;
 
             case EnemyState.Attack:
-
                 if (distance > attackRange * 1.2f)
                 {
                     currentState = EnemyState.Chase;
@@ -154,7 +157,6 @@ public class EnemyAI : MonoBehaviour
                 {
                     UpdateAttack();
                 }
-
                 break;
         }
 
@@ -193,14 +195,27 @@ public class EnemyAI : MonoBehaviour
         if (agent == null || !agent.isOnNavMesh)
             return;
 
-        Vector3 randomPoint = patrolOrigin +
-            Random.insideUnitSphere * patrolRadius;
+        if (orbitPoints < 3)
+            orbitPoints = 8;
+
+        float angle = currentOrbitPoint *
+            (360f / orbitPoints) * Mathf.Deg2Rad;
+
+        Vector3 center = patrolCenter != null
+            ? patrolCenter.position
+            : patrolOrigin;
+
+        Vector3 target = center + new Vector3(
+            Mathf.Sin(angle) * orbitRadius,
+            0f,
+            Mathf.Cos(angle) * orbitRadius
+        );
+
+        currentOrbitPoint =
+            (currentOrbitPoint + 1) % orbitPoints;
 
         if (NavMesh.SamplePosition(
-            randomPoint,
-            out NavMeshHit hit,
-            patrolRadius,
-            NavMesh.AllAreas))
+            target, out NavMeshHit hit, 2f, NavMesh.AllAreas))
         {
             agent.isStopped = false;
             agent.SetDestination(hit.position);
@@ -226,17 +241,14 @@ public class EnemyAI : MonoBehaviour
 
         attackTimer = attackCooldown;
 
-        // Keep the existing red attack flash.
         FlashRed();
 
-        // Optional attack animation.
         if (animator != null &&
             !string.IsNullOrEmpty(attackTrigger))
         {
             animator.SetTrigger(attackTrigger);
         }
 
-        // Shoot the projectile toward the player.
         if (projectilePrefab == null || player == null)
         {
             Debug.LogWarning(
@@ -271,11 +283,9 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-
     void CacheRenderers()
     {
         ghostRenderers = GetComponentsInChildren<Renderer>();
-
         originalColors = new Color[ghostRenderers.Length];
 
         for (int i = 0; i < ghostRenderers.Length; i++)
@@ -306,7 +316,6 @@ public class EnemyAI : MonoBehaviour
         yield return new WaitForSeconds(flashDuration);
 
         RestoreGhostColor();
-
         flashCoroutine = null;
     }
 
@@ -347,7 +356,6 @@ public class EnemyAI : MonoBehaviour
         if (animator == null)
             return;
 
-        // Only update Speed if the Animator has this parameter.
         foreach (AnimatorControllerParameter parameter
                  in animator.parameters)
         {
@@ -361,21 +369,23 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-
-
     void OnDrawGizmosSelected()
     {
-        // Red circle: range where the ghost detects the player.
+        Gizmos.color = Color.cyan;
+
+        Vector3 center = patrolCenter != null
+            ? patrolCenter.position
+            : transform.position;
+
+        Gizmos.DrawWireSphere(center, orbitRadius);
+
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
 
-        // Yellow circle: range where the ghost attacks.
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, attackRange);
 
-        // Orange circle: range where the ghost can lose its target.
         Gizmos.color = new Color(1f, 0.5f, 0f);
         Gizmos.DrawWireSphere(transform.position, loseTargetRange);
     }
-
 }
