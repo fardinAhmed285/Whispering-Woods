@@ -68,6 +68,10 @@ public class EnemyAI : MonoBehaviour
     private int currentOrbitPoint;
 
     private float fleeTimer;
+    private Transform currentTarget;
+    private PlayerHealth playerHealth;
+    private float targetCheckTimer;
+    private const float targetCheckInterval = 0.5f;
     private float lostTargetTimer;
     private Vector3 originalScale;
 
@@ -140,26 +144,40 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        float distance = Vector3.Distance(
-            transform.position, player.position);
-
         attackTimer -= Time.deltaTime;
 
-        // Player safe at a lit campfire: stop chasing
-        bool playerIsSafe =
-            CampfireInteraction.IsInsideLitCampfire(player.position);
+        // Target: the player or a companion wolf, whichever is closest
+        if (!IsValidTarget(currentTarget))
+            currentTarget = null;
 
-        if (playerIsSafe && currentState != EnemyState.Patrol)
+        targetCheckTimer += Time.deltaTime;
+
+        if (targetCheckTimer >= targetCheckInterval)
+        {
+            targetCheckTimer = 0f;
+
+            Transform closest = FindClosestTarget();
+
+            if (closest != null)
+                currentTarget = closest;
+        }
+
+        // Target gone, dead or safe at a lit campfire: stop chasing
+        if (currentTarget == null && currentState != EnemyState.Patrol)
         {
             currentState = EnemyState.Patrol;
             agent.isStopped = false;
             ChoosePatrolDestination();
         }
 
+        float distance = currentTarget != null
+            ? Vector3.Distance(transform.position, currentTarget.position)
+            : float.MaxValue;
+
         switch (currentState)
         {
             case EnemyState.Patrol:
-                if (distance <= detectionRange && !playerIsSafe)
+                if (distance <= detectionRange)
                 {
                     lostTargetTimer = 0f;
                     currentState = EnemyState.Chase;
@@ -180,6 +198,7 @@ public class EnemyAI : MonoBehaviour
                 if (lostTargetTimer >= chaseMemory)
                 {
                     lostTargetTimer = 0f;
+                    currentTarget = null;
                     currentState = EnemyState.Patrol;
                     ChoosePatrolDestination();
                 }
@@ -324,8 +343,62 @@ public class EnemyAI : MonoBehaviour
         {
             destinationTimer = 0f;
             agent.isStopped = false;
-            agent.SetDestination(player.position);
+            agent.SetDestination(currentTarget.position);
         }
+    }
+
+    bool IsValidTarget(Transform target)
+    {
+        if (target == null)
+            return false;
+
+        if (CampfireInteraction.IsInsideLitCampfire(target.position))
+            return false;
+
+        if (target == player)
+        {
+            if (playerHealth == null)
+                playerHealth = player.GetComponentInParent<PlayerHealth>();
+
+            return playerHealth == null || !playerHealth.IsDead;
+        }
+
+        WolfHealth wolf = target.GetComponent<WolfHealth>();
+        return wolf != null && wolf.CanBeTargeted;
+    }
+
+    Transform FindClosestTarget()
+    {
+        Transform closest = null;
+        float closestDistance = detectionRange;
+
+        if (IsValidTarget(player))
+        {
+            float d = Vector3.Distance(transform.position, player.position);
+
+            if (d <= closestDistance)
+            {
+                closestDistance = d;
+                closest = player;
+            }
+        }
+
+        foreach (WolfHealth wolf in
+                 FindObjectsByType<WolfHealth>(FindObjectsSortMode.None))
+        {
+            if (!IsValidTarget(wolf.transform))
+                continue;
+
+            float d = Vector3.Distance(transform.position, wolf.transform.position);
+
+            if (d < closestDistance)
+            {
+                closestDistance = d;
+                closest = wolf.transform;
+            }
+        }
+
+        return closest;
     }
 
     void UpdateAttack()
@@ -343,7 +416,7 @@ public class EnemyAI : MonoBehaviour
             animator.SetTrigger(attackTrigger);
         }
 
-        if (projectilePrefab == null || player == null)
+        if (projectilePrefab == null || currentTarget == null)
         {
             Debug.LogWarning(
                 "Assign the projectile prefab in EnemyAI.", this);
@@ -366,7 +439,7 @@ public class EnemyAI : MonoBehaviour
         if (projectileScript != null)
         {
             projectileScript.damage = projectileDamage;
-            projectileScript.Launch(player);
+            projectileScript.Launch(currentTarget);
         }
         else
         {

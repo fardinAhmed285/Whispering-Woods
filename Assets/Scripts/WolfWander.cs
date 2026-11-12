@@ -12,7 +12,7 @@ public class WolfWander : MonoBehaviour
         Called,
         Follow,
         SeekFood,
-        Attack      
+        Attack
     }
 
     [Header("State")]
@@ -54,17 +54,21 @@ public class WolfWander : MonoBehaviour
     public float runSpeed = 5f;
 
     [Header("Call")]
-    [Tooltip("If the wolf is farther than this when called with H, it teleports behind the player. 0 = never teleport.")]
+    [Tooltip("Teleports when called from farther than this. 0 = never.")]
     public float teleportDistance = 25f;
 
     [Header("Combat (companion only)")]
-    [Tooltip("Ghosts closer than this to the player get attacked by the wolf.")]
-    public float enemyDetectionRange = 8f;
-    [Tooltip("The wolf gives up the fight if it gets this far from the player.")]
+    [Tooltip("Off: the wolf only attacks ghosts you point at (right click). On: it also attacks nearby ghosts on its own.")]
+    public bool autoAttack = false;
+    [Tooltip("Max distance from the player when chasing a ghost you pointed at.")]
+    public float commandMaxDistance = 40f;
+    [Tooltip("Attacks ghosts this close to the player.")]
+    public float enemyDetectionRange = 12f;
+    [Tooltip("Stops fighting this far from the player.")]
     public float maxDistanceFromPlayer = 15f;
     public float biteRange = 2f;
-    public float biteDamage = 15f;
-    public float biteCooldown = 1.5f;
+    public float biteDamage = 8f;
+    public float biteCooldown = 2f;
     public float enemySearchInterval = 0.5f;
 
     private NavMeshAgent agent;
@@ -82,6 +86,10 @@ public class WolfWander : MonoBehaviour
     private GameObject foodTarget;
 
     private EnemyHealth enemyTarget;
+    private bool commandedAttack;
+    private WolfHealth health;
+
+    public bool IsCompanion => companionActive;
     private float enemySearchTimer;
     private float biteTimer;
 
@@ -105,6 +113,11 @@ public class WolfWander : MonoBehaviour
             enabled = false;
             return;
         }
+
+        health = GetComponent<WolfHealth>();
+
+        if (health == null)
+            health = gameObject.AddComponent<WolfHealth>();
 
         if (player != null)
         {
@@ -170,10 +183,12 @@ public class WolfWander : MonoBehaviour
             }
         }
 
-        // Companion wolf: look for ghosts threatening the player.
+        // Companion: look for ghosts near the player
         biteTimer -= Time.deltaTime;
 
-        if (companionActive &&
+        if (autoAttack &&
+            companionActive &&
+            (health == null || !health.IsWounded) &&
             (currentState == WolfState.Follow ||
              currentState == WolfState.Called))
         {
@@ -188,6 +203,7 @@ public class WolfWander : MonoBehaviour
                 if (enemy != null)
                 {
                     enemyTarget = enemy;
+                    commandedAttack = false;
                     EnterState(WolfState.Attack);
                     Debug.Log("Wolf is attacking " + enemy.name + "!");
                 }
@@ -335,7 +351,6 @@ public class WolfWander : MonoBehaviour
                 <= teleportDistance)
             return;
 
-        // A spot about 3 m behind the player, snapped onto the NavMesh.
         Vector3 behindPlayer = player.position - player.forward * 3f;
 
         if (NavMesh.SamplePosition(
@@ -348,8 +363,6 @@ public class WolfWander : MonoBehaviour
             Debug.Log("Wolf was far away and teleported to you.");
         }
     }
-
-    // ---------- Combat ----------
 
     EnemyHealth FindNearestEnemy()
     {
@@ -367,13 +380,14 @@ public class WolfWander : MonoBehaviour
             if (enemy == null || enemy.currentHealth <= 0f)
                 continue;
 
-            // Defend the player: only ghosts close to the player count.
-            float distanceToPlayer = FlatDistance(
-                enemy.transform.position, player.position);
+            // Ghosts close to the player or to the wolf itself
+            float distance = Mathf.Min(
+                FlatDistance(enemy.transform.position, player.position),
+                FlatDistance(enemy.transform.position, transform.position));
 
-            if (distanceToPlayer < closestDistance)
+            if (distance < closestDistance)
             {
-                closestDistance = distanceToPlayer;
+                closestDistance = distance;
                 closest = enemy;
             }
         }
@@ -383,17 +397,24 @@ public class WolfWander : MonoBehaviour
 
     void UpdateAttack()
     {
-        // Ghost destroyed (EnemyHealth destroys the GameObject on death),
-        // wolf dismissed with H, or no player: back to following.
         if (enemyTarget == null || !companionActive || player == null)
         {
             StopAttacking();
             return;
         }
 
-        // Don't let the wolf get dragged across the map.
-        if (FlatDistance(transform.position, player.position)
-                > maxDistanceFromPlayer)
+        // Badly hurt: retreat to the player
+        if (health != null && health.IsWounded)
+        {
+            Debug.Log(name + " is hurt and retreats to you.");
+            StopAttacking();
+            return;
+        }
+
+        // Too far from the player
+        float leash = commandedAttack ? commandMaxDistance : maxDistanceFromPlayer;
+
+        if (FlatDistance(transform.position, player.position) > leash)
         {
             Debug.Log("Wolf breaks off the fight to stay with you.");
             StopAttacking();
@@ -418,7 +439,7 @@ public class WolfWander : MonoBehaviour
             return;
         }
 
-        // In range: stop, face the ghost and bite.
+        // In range: bite
         agent.isStopped = true;
         agent.ResetPath();
 
@@ -439,9 +460,43 @@ public class WolfWander : MonoBehaviour
         enemyTarget.TakeDamage(biteDamage);
     }
 
+    // Called by WolfCommand when the player points at a ghost.
+    public bool CommandAttack(EnemyHealth enemy)
+    {
+        if (!companionActive || enemy == null)
+            return false;
+
+        if (health != null && health.IsWounded)
+        {
+            Debug.Log(name + " is too hurt to fight.");
+            return false;
+        }
+
+        enemyTarget = enemy;
+        commandedAttack = true;
+        EnterState(WolfState.Attack);
+
+        Debug.Log(name + " attacks " + enemy.name + " on your command!");
+        return true;
+    }
+
+    public void KnockOut()
+    {
+        Debug.Log(name + " is exhausted and runs away. Feed it again to tame it.");
+
+        companionActive = false;
+        trustLevel = 0;
+        enemyTarget = null;
+        commandedAttack = false;
+        foodTarget = null;
+        eatingWorldFood = false;
+        EnterState(WolfState.Wander);
+    }
+
     void StopAttacking()
     {
         enemyTarget = null;
+        commandedAttack = false;
 
         if (companionActive)
             EnterState(WolfState.Called);
@@ -461,11 +516,11 @@ public class WolfWander : MonoBehaviour
         if (player == null)
             return;
 
-        // Red circle around the player: ghosts inside get attacked.
+        // Attack range
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(player.position, enemyDetectionRange);
 
-        // Blue circle: how far the wolf may stray from the player.
+        // Max distance from player
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(player.position, maxDistanceFromPlayer);
     }
