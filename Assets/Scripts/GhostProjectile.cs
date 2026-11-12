@@ -91,6 +91,15 @@ public class GhostProjectile : MonoBehaviour
             {
                 health.TakeDamage(damage);
                 Destroy(gameObject);
+                return;
+            }
+
+            WolfHealth wolf = other.GetComponentInParent<WolfHealth>();
+
+            if (wolf != null)
+            {
+                wolf.TakeDamage(damage);
+                Destroy(gameObject);
             }
         }
     }
@@ -120,6 +129,11 @@ public class GhostProjectile : MonoBehaviour
 
                 if (health != null)
                     health.TakeDamage(damage);
+
+                WolfHealth wolf = target.GetComponentInParent<WolfHealth>();
+
+                if (wolf != null)
+                    wolf.TakeDamage(damage);
             }
         }
 
