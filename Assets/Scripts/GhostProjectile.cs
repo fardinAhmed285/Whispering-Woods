@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class GhostProjectile : MonoBehaviour
@@ -37,6 +36,14 @@ public class GhostProjectile : MonoBehaviour
     {
         if (!launched || hasHit)
             return;
+
+        // Player reached a lit campfire
+        if (!firedByPlayer && target != null &&
+            CampfireInteraction.IsInsideLitCampfire(target.position))
+        {
+            Destroy(gameObject);
+            return;
+        }
 
         if (target != null)
             targetPoint = target.position + Vector3.up;

@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
@@ -12,7 +11,8 @@ public class WolfWander : MonoBehaviour
         Feed,
         Called,
         Follow,
-        SeekFood
+        SeekFood,
+        Attack      
     }
 
     [Header("State")]
@@ -53,6 +53,20 @@ public class WolfWander : MonoBehaviour
     public float walkSpeed = 2f;
     public float runSpeed = 5f;
 
+    [Header("Call")]
+    [Tooltip("If the wolf is farther than this when called with H, it teleports behind the player. 0 = never teleport.")]
+    public float teleportDistance = 25f;
+
+    [Header("Combat (companion only)")]
+    [Tooltip("Ghosts closer than this to the player get attacked by the wolf.")]
+    public float enemyDetectionRange = 8f;
+    [Tooltip("The wolf gives up the fight if it gets this far from the player.")]
+    public float maxDistanceFromPlayer = 15f;
+    public float biteRange = 2f;
+    public float biteDamage = 15f;
+    public float biteCooldown = 1.5f;
+    public float enemySearchInterval = 0.5f;
+
     private NavMeshAgent agent;
     private Animator animator;
     private WolfFoodInventory foodInventory;
@@ -66,6 +80,10 @@ public class WolfWander : MonoBehaviour
     private bool eatingWorldFood;
 
     private GameObject foodTarget;
+
+    private EnemyHealth enemyTarget;
+    private float enemySearchTimer;
+    private float biteTimer;
 
     void Start()
     {
@@ -124,6 +142,7 @@ public class WolfWander : MonoBehaviour
 
         if (currentState != WolfState.Feed &&
             currentState != WolfState.SeekFood &&
+            currentState != WolfState.Attack &&
             player != null &&
             Keyboard.current != null &&
             Keyboard.current.eKey.wasPressedThisFrame &&
@@ -148,6 +167,30 @@ public class WolfWander : MonoBehaviour
 
                 if (FindNearbyFood())
                     return;
+            }
+        }
+
+        // Companion wolf: look for ghosts threatening the player.
+        biteTimer -= Time.deltaTime;
+
+        if (companionActive &&
+            (currentState == WolfState.Follow ||
+             currentState == WolfState.Called))
+        {
+            enemySearchTimer += Time.deltaTime;
+
+            if (enemySearchTimer >= enemySearchInterval)
+            {
+                enemySearchTimer = 0f;
+
+                EnemyHealth enemy = FindNearestEnemy();
+
+                if (enemy != null)
+                {
+                    enemyTarget = enemy;
+                    EnterState(WolfState.Attack);
+                    Debug.Log("Wolf is attacking " + enemy.name + "!");
+                }
             }
         }
 
@@ -178,6 +221,10 @@ public class WolfWander : MonoBehaviour
             case WolfState.SeekFood:
                 UpdateSeekFood();
                 break;
+
+            case WolfState.Attack:
+                UpdateAttack();
+                break;
         }
     }
 
@@ -190,7 +237,8 @@ public class WolfWander : MonoBehaviour
         bool moving = movement > 0.1f;
 
         bool shouldRun =
-            currentState == WolfState.Called &&
+            (currentState == WolfState.Called ||
+             currentState == WolfState.Attack) &&
             companionActive &&
             moving;
 
@@ -207,12 +255,14 @@ public class WolfWander : MonoBehaviour
         if (companionActive)
         {
             foodTarget = null;
+            TeleportNearPlayerIfFar();
             agent.speed = runSpeed;
             EnterState(WolfState.Called);
             Debug.Log("Wolf called to player!");
         }
         else
         {
+            enemyTarget = null;
             agent.speed = walkSpeed;
             EnterState(WolfState.Wander);
             Debug.Log("Wolf released to wander.");
@@ -267,7 +317,157 @@ public class WolfWander : MonoBehaviour
                 agent.speed = walkSpeed;
                 animator.SetBool(runningParameter, false);
                 break;
+
+            case WolfState.Attack:
+                agent.isStopped = false;
+                agent.speed = runSpeed;
+                animator.SetBool(runningParameter, true);
+                break;
         }
+    }
+
+    void TeleportNearPlayerIfFar()
+    {
+        if (player == null || teleportDistance <= 0f)
+            return;
+
+        if (FlatDistance(transform.position, player.position)
+                <= teleportDistance)
+            return;
+
+        // A spot about 3 m behind the player, snapped onto the NavMesh.
+        Vector3 behindPlayer = player.position - player.forward * 3f;
+
+        if (NavMesh.SamplePosition(
+            behindPlayer, out NavMeshHit hit, 5f, NavMesh.AllAreas))
+        {
+            agent.Warp(hit.position);
+            transform.rotation = Quaternion.LookRotation(
+                Vector3.ProjectOnPlane(player.forward, Vector3.up));
+
+            Debug.Log("Wolf was far away and teleported to you.");
+        }
+    }
+
+    // ---------- Combat ----------
+
+    EnemyHealth FindNearestEnemy()
+    {
+        if (player == null)
+            return null;
+
+        EnemyHealth[] enemies =
+            FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None);
+
+        EnemyHealth closest = null;
+        float closestDistance = enemyDetectionRange;
+
+        foreach (EnemyHealth enemy in enemies)
+        {
+            if (enemy == null || enemy.currentHealth <= 0f)
+                continue;
+
+            // Defend the player: only ghosts close to the player count.
+            float distanceToPlayer = FlatDistance(
+                enemy.transform.position, player.position);
+
+            if (distanceToPlayer < closestDistance)
+            {
+                closestDistance = distanceToPlayer;
+                closest = enemy;
+            }
+        }
+
+        return closest;
+    }
+
+    void UpdateAttack()
+    {
+        // Ghost destroyed (EnemyHealth destroys the GameObject on death),
+        // wolf dismissed with H, or no player: back to following.
+        if (enemyTarget == null || !companionActive || player == null)
+        {
+            StopAttacking();
+            return;
+        }
+
+        // Don't let the wolf get dragged across the map.
+        if (FlatDistance(transform.position, player.position)
+                > maxDistanceFromPlayer)
+        {
+            Debug.Log("Wolf breaks off the fight to stay with you.");
+            StopAttacking();
+            return;
+        }
+
+        Vector3 enemyPosition = enemyTarget.transform.position;
+        float distance = FlatDistance(transform.position, enemyPosition);
+
+        if (distance > biteRange)
+        {
+            destinationTimer += Time.deltaTime;
+
+            if (destinationTimer >= destinationUpdateRate)
+            {
+                destinationTimer = 0f;
+                agent.isStopped = false;
+                agent.speed = runSpeed;
+                agent.SetDestination(enemyPosition);
+            }
+
+            return;
+        }
+
+        // In range: stop, face the ghost and bite.
+        agent.isStopped = true;
+        agent.ResetPath();
+
+        Vector3 lookDirection = enemyPosition - transform.position;
+        lookDirection.y = 0f;
+
+        if (lookDirection.sqrMagnitude > 0.01f)
+            transform.rotation = Quaternion.LookRotation(lookDirection);
+
+        if (biteTimer > 0f)
+            return;
+
+        biteTimer = biteCooldown;
+
+        animator.ResetTrigger(biteParameter);
+        animator.SetTrigger(biteParameter);
+
+        enemyTarget.TakeDamage(biteDamage);
+    }
+
+    void StopAttacking()
+    {
+        enemyTarget = null;
+
+        if (companionActive)
+            EnterState(WolfState.Called);
+        else
+            EnterState(WolfState.Wander);
+    }
+
+    float FlatDistance(Vector3 a, Vector3 b)
+    {
+        a.y = 0f;
+        b.y = 0f;
+        return Vector3.Distance(a, b);
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        if (player == null)
+            return;
+
+        // Red circle around the player: ghosts inside get attacked.
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(player.position, enemyDetectionRange);
+
+        // Blue circle: how far the wolf may stray from the player.
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(player.position, maxDistanceFromPlayer);
     }
 
     bool FindNearbyFood()

@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
@@ -9,7 +8,8 @@ public class EnemyAI : MonoBehaviour
     {
         Patrol,
         Chase,
-        Attack
+        Attack,
+        Flee
     }
 
     [Header("Target")]
@@ -21,9 +21,18 @@ public class EnemyAI : MonoBehaviour
     public float orbitRadius = 3f;
     public int orbitPoints = 8;
 
+    [Header("Campfire Fear")]
+    [Tooltip("Ghosts based at a campfire disappear when it is lit.")]
+    public bool vanishWhenCampfireLit = true;
+    [Tooltip("Seconds before the ghost disappears.")]
+    public float fleeDuration = 3f;
+    public float fleeDistance = 15f;
+
     [Header("Detection")]
     public float detectionRange = 8f;
     public float loseTargetRange = 12f;
+    [Tooltip("Seconds the ghost keeps chasing after the player gets out of range.")]
+    public float chaseMemory = 4f;
 
     [Header("Movement")]
     public float patrolWaitTime = 1f;
@@ -57,6 +66,10 @@ public class EnemyAI : MonoBehaviour
     private float patrolTimer;
     private float attackTimer;
     private int currentOrbitPoint;
+
+    private float fleeTimer;
+    private float lostTargetTimer;
+    private Vector3 originalScale;
 
     private Renderer[] ghostRenderers;
     private Color[] originalColors;
@@ -98,11 +111,28 @@ public class EnemyAI : MonoBehaviour
             ? patrolCenter.position
             : transform.position;
 
+        originalScale = transform.localScale;
+
         ChoosePatrolDestination();
     }
 
     void Update()
     {
+        // Its base is now inside a lit campfire: flee
+        if (vanishWhenCampfireLit &&
+            currentState != EnemyState.Flee &&
+            CampfireInteraction.IsInsideLitCampfire(patrolOrigin))
+        {
+            StartFleeing();
+        }
+
+        if (currentState == EnemyState.Flee)
+        {
+            UpdateFlee();
+            UpdateMovementAnimation();
+            return;
+        }
+
         if (player == null)
         {
             FindPlayer();
@@ -115,11 +145,23 @@ public class EnemyAI : MonoBehaviour
 
         attackTimer -= Time.deltaTime;
 
+        // Player safe at a lit campfire: stop chasing
+        bool playerIsSafe =
+            CampfireInteraction.IsInsideLitCampfire(player.position);
+
+        if (playerIsSafe && currentState != EnemyState.Patrol)
+        {
+            currentState = EnemyState.Patrol;
+            agent.isStopped = false;
+            ChoosePatrolDestination();
+        }
+
         switch (currentState)
         {
             case EnemyState.Patrol:
-                if (distance <= detectionRange)
+                if (distance <= detectionRange && !playerIsSafe)
                 {
+                    lostTargetTimer = 0f;
                     currentState = EnemyState.Chase;
                     destinationTimer = destinationUpdateRate;
                 }
@@ -131,7 +173,13 @@ public class EnemyAI : MonoBehaviour
 
             case EnemyState.Chase:
                 if (distance > loseTargetRange)
+                    lostTargetTimer += Time.deltaTime;
+                else
+                    lostTargetTimer = 0f;
+
+                if (lostTargetTimer >= chaseMemory)
                 {
+                    lostTargetTimer = 0f;
                     currentState = EnemyState.Patrol;
                     ChoosePatrolDestination();
                 }
@@ -161,6 +209,52 @@ public class EnemyAI : MonoBehaviour
         }
 
         UpdateMovementAnimation();
+    }
+
+    void StartFleeing()
+    {
+        currentState = EnemyState.Flee;
+        fleeTimer = 0f;
+
+        Vector3 away = transform.position - patrolOrigin;
+        away.y = 0f;
+
+        if (away.sqrMagnitude < 0.01f)
+            away = Random.insideUnitSphere;
+
+        away.y = 0f;
+
+        Vector3 fleeTarget =
+            transform.position + away.normalized * fleeDistance;
+
+        agent.isStopped = false;
+
+        if (NavMesh.SamplePosition(
+            fleeTarget, out NavMeshHit hit, 5f, NavMesh.AllAreas))
+        {
+            agent.SetDestination(hit.position);
+        }
+
+        Debug.Log(name + " flees the campfire light!");
+    }
+
+    void UpdateFlee()
+    {
+        fleeTimer += Time.deltaTime;
+
+        // Shrink, then disappear
+        float fadeStart = Mathf.Max(0f, fleeDuration - 1f);
+
+        if (fleeTimer > fadeStart)
+        {
+            float t = Mathf.Clamp01(
+                (fleeTimer - fadeStart) / Mathf.Max(0.01f, fleeDuration - fadeStart));
+
+            transform.localScale = Vector3.Lerp(originalScale, Vector3.zero, t);
+        }
+
+        if (fleeTimer >= fleeDuration)
+            Destroy(gameObject);
     }
 
     void FindPlayer()
