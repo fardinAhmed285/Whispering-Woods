@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
@@ -126,6 +125,48 @@ public class PlayerHealth : MonoBehaviour
         Cursor.visible = true;
     }
 
+
+    public void Respawn(Vector3 position)
+    {
+        isDead = false;
+        currentHealth = maxHealth;
+
+        if (healthBar != null)
+            healthBar.value = currentHealth;
+
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
+
+        // CharacterController overrides position changes while enabled
+        CharacterController characterController =
+            GetComponent<CharacterController>();
+
+        if (characterController != null)
+            characterController.enabled = false;
+
+        transform.position = position;
+
+        if (characterController != null)
+            characterController.enabled = true;
+
+        // Re-enable what Die() turned off
+        foreach (MonoBehaviour script in GetComponents<MonoBehaviour>())
+        {
+            if (script != this &&
+                (script.GetType().Name.Contains("Movement") ||
+                 script.GetType().Name.Contains("Controller") ||
+                 script.GetType().Name == "PlayerMagicAttack"))
+            {
+                script.enabled = true;
+            }
+        }
+
+        Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        Debug.Log("Respawned at campfire.");
+    }
 
     public void Heal(float amount)
     {
