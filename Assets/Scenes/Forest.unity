@@ -51734,6 +51734,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4416926081852918481, guid: 64dce48905ffd9b4293e595fa6941544, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1797351681}
+    - targetCorrespondingSourceObject: {fileID: 4416926081852918481, guid: 64dce48905ffd9b4293e595fa6941544, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1797351688}
   m_SourcePrefab: {fileID: 100100000, guid: 64dce48905ffd9b4293e595fa6941544, type: 3}
 --- !u!1001 &1283839194
 PrefabInstance:
@@ -74806,6 +74809,22 @@ MonoBehaviour:
   projectileLifetime: 10
   attackCooldown: 0.7
   attackRange: 30
+--- !u!114 &1797351688
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1797351665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41c8f78d1d4e34120aa111cd66141567, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WolfCommand
+  commandKey: 31
+  maxRange: 40
+  aimRadius: 2.5
+  aimRadiusPerMetre: 0.05
 --- !u!1001 &1797449584
 PrefabInstance:
   m_ObjectHideFlags: 0
