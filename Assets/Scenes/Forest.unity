@@ -749,6 +749,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf03ef21ae718eb49a7266ab85e6d7e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CampfireInteraction
+  safeRadius: 10
   fireEffect: {fileID: 447938466}
   fireLight: {fileID: 230080400}
   healPerSecond: 5
@@ -3411,6 +3412,15 @@ MonoBehaviour:
   biteDuration: 3.55
   walkSpeed: 2
   runSpeed: 5
+  teleportDistance: 25
+  autoAttack: 0
+  commandMaxDistance: 40
+  enemyDetectionRange: 12
+  maxDistanceFromPlayer: 15
+  biteRange: 2
+  biteDamage: 8
+  biteCooldown: 2
+  enemySearchInterval: 0.5
 --- !u!65 &139260937
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3653,6 +3663,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf03ef21ae718eb49a7266ab85e6d7e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CampfireInteraction
+  safeRadius: 10
   fireEffect: {fileID: 452859123}
   fireLight: {fileID: 398243404}
   healPerSecond: 5
@@ -7646,7 +7657,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.46076116, z: 0, w: 0.8875242}
-  m_LocalPosition: {x: 51.367474, y: 166.345, z: 32.630463}
+  m_LocalPosition: {x: 50.862663, y: 166.345, z: 32.98561}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -26337,7 +26348,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2070925441746177912, guid: a1a802ecaf6775746bb2a929fb554ad8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 51.367474
+      value: 50.862663
       objectReference: {fileID: 0}
     - target: {fileID: 2070925441746177912, guid: a1a802ecaf6775746bb2a929fb554ad8, type: 3}
       propertyPath: m_LocalPosition.y
@@ -26345,7 +26356,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2070925441746177912, guid: a1a802ecaf6775746bb2a929fb554ad8, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 32.630463
+      value: 32.98561
       objectReference: {fileID: 0}
     - target: {fileID: 2070925441746177912, guid: a1a802ecaf6775746bb2a929fb554ad8, type: 3}
       propertyPath: m_LocalRotation.w
@@ -27135,6 +27146,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf03ef21ae718eb49a7266ab85e6d7e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CampfireInteraction
+  safeRadius: 10
   fireEffect: {fileID: 769965860}
   fireLight: {fileID: 67735930}
   healPerSecond: 5
@@ -38412,6 +38424,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf03ef21ae718eb49a7266ab85e6d7e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CampfireInteraction
+  safeRadius: 10
   fireEffect: {fileID: 1335318124}
   fireLight: {fileID: 623151034}
   healPerSecond: 5
@@ -44065,15 +44078,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 7d6d20bc9e857574684c29be9e4831cf, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 574.119
+      value: 51.28
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7d6d20bc9e857574684c29be9e4831cf, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 180.202
+      value: 165.02
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7d6d20bc9e857574684c29be9e4831cf, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 542.48004
+      value: 33.46
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 7d6d20bc9e857574684c29be9e4831cf, type: 3}
       propertyPath: m_LocalRotation.w
@@ -59150,6 +59163,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf03ef21ae718eb49a7266ab85e6d7e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CampfireInteraction
+  safeRadius: 10
   fireEffect: {fileID: 1542222066}
   fireLight: {fileID: 784168834}
   healPerSecond: 5
@@ -73934,8 +73948,12 @@ MonoBehaviour:
   patrolCenter: {fileID: 1332903018}
   orbitRadius: 3
   orbitPoints: 8
+  vanishWhenCampfireLit: 1
+  fleeDuration: 3
+  fleeDistance: 15
   detectionRange: 8
   loseTargetRange: 12
+  chaseMemory: 4
   patrolWaitTime: 3
   destinationUpdateRate: 0.25
   attackRange: 1.8
@@ -75691,8 +75709,12 @@ MonoBehaviour:
   patrolCenter: {fileID: 147683984}
   orbitRadius: 3
   orbitPoints: 8
+  vanishWhenCampfireLit: 1
+  fleeDuration: 3
+  fleeDistance: 15
   detectionRange: 8
   loseTargetRange: 12
+  chaseMemory: 4
   patrolWaitTime: 3
   destinationUpdateRate: 0.25
   attackRange: 1.8
@@ -77963,6 +77985,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf03ef21ae718eb49a7266ab85e6d7e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CampfireInteraction
+  safeRadius: 10
   fireEffect: {fileID: 1002805979}
   fireLight: {fileID: 219926034}
   healPerSecond: 5
