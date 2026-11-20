@@ -5,7 +5,7 @@ public class CampfireManager : MonoBehaviour
     [Header("Campfire Progress")]
     public int totalCampfires = 6;
     private int litCampfires = 0;
-
+    public int LitCampfires => litCampfires;
     [Header("Day Night Cycle")]
     public DayNightCycle dayNightCycle;
 
