@@ -12,7 +12,17 @@ public class CampfireInteraction : MonoBehaviour
     public float safeRadius = 10f;
 
     public bool IsLit => isLit;
+    public static int LitCampfireCount => litCampfires.Count;
+    public static int UnlitCampfireCount
+    {
+        get
+        {
+            CampfireInteraction[] allCampfires =
+                FindObjectsByType<CampfireInteraction>(FindObjectsSortMode.None);
 
+            return allCampfires.Length - litCampfires.Count;
+        }
+    }
     // Last lit campfire the player visited: respawn point after death.
     public static CampfireInteraction LastCheckpoint { get; private set; }
 

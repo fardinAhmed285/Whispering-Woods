@@ -90,6 +90,7 @@ public class WolfWander : MonoBehaviour
     private WolfHealth health;
 
     public bool IsCompanion => companionActive;
+    public float Hunger => hunger;
     private float enemySearchTimer;
     private float biteTimer;
 

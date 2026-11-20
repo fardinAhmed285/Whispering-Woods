@@ -3442,6 +3442,23 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.4814453, y: 1.3953705, z: 2.5127563}
   m_Center: {x: -0.026611328, y: 0.6884079, z: -0.019134521}
+--- !u!114 &139260940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 139260930}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edeb4a60fca0f4fb080c1d89f832f6b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WolfHealth
+  maxHealth: 60
+  currentHealth: 0
+  regenDelay: 4
+  regenPerSecond: 3
+  woundedThreshold: 0.3
 --- !u!1001 &142441535
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -44153,6 +44170,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7d6d20bc9e857574684c29be9e4831cf, type: 3}
       insertIndex: -1
       addedObject: {fileID: 139260937}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7d6d20bc9e857574684c29be9e4831cf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 139260940}
     - targetCorrespondingSourceObject: {fileID: -7804813766729237864, guid: 7d6d20bc9e857574684c29be9e4831cf, type: 3}
       insertIndex: -1
       addedObject: {fileID: 73906133}
@@ -73420,7 +73440,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1657fe5f9a5a842478d014b9d05aeaef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GuardianInteraction
-  apiKey: 
+  apiKey: AQ.Ab8RN6ILhbXoYu-m043Q2kROW7Zg1maSMqaYyv6xBTUqpgZjKw
   model: gemini-3.5-flash-lite
   dialoguePanel: {fileID: 1857549513}
   dialogueText: {fileID: 1047603156}
@@ -73428,6 +73448,9 @@ MonoBehaviour:
   sendButton: {fileID: 674522929}
   dialogueScrollRect: {fileID: 1032227426}
   player: {fileID: 1797351665}
+  campfireManager: {fileID: 32057121}
+  wolf: {fileID: 139260934}
+  wolfHealth: {fileID: 139260940}
 --- !u!135 &1739214734
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -75780,15 +75803,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7846960608096263535, guid: 04dadcfb8f3a78347aff46020e1aae74, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 568.01
+      value: 47.97
       objectReference: {fileID: 0}
     - target: {fileID: 7846960608096263535, guid: 04dadcfb8f3a78347aff46020e1aae74, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 179.79
+      value: 164.96
       objectReference: {fileID: 0}
     - target: {fileID: 7846960608096263535, guid: 04dadcfb8f3a78347aff46020e1aae74, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 548.92
+      value: 36.63
       objectReference: {fileID: 0}
     - target: {fileID: 7846960608096263535, guid: 04dadcfb8f3a78347aff46020e1aae74, type: 3}
       propertyPath: m_LocalRotation.w
@@ -80963,7 +80986,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2051979009
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -81015,7 +81038,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2051979008}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &2051979011
 Camera:
   m_ObjectHideFlags: 0

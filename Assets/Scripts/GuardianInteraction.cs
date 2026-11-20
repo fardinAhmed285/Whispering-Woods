@@ -25,6 +25,11 @@ public class GuardianInteraction : MonoBehaviour
     [Header("Player Control")]
     public GameObject player;
 
+    [Header("Game State")]
+    public CampfireManager campfireManager;
+    public WolfWander wolf;
+    public WolfHealth wolfHealth;
+
     private bool playerNearby;
     private bool isRequesting;
     private bool dialogueOpen;
@@ -214,6 +219,53 @@ public class GuardianInteraction : MonoBehaviour
         disabledMovementScripts.Clear();
     }
 
+    private string GetGameState()
+    {
+        StringBuilder state = new StringBuilder();
+
+        // Campfire progress
+        if (campfireManager != null)
+        {
+            state.AppendLine(
+                $"Campfires lit: {campfireManager.LitCampfires}/{campfireManager.totalCampfires}");
+
+            state.AppendLine(
+                $"Campfires remaining: {CampfireInteraction.UnlitCampfireCount}");
+        }
+
+        // Living ghosts
+        EnemyHealth[] ghosts =
+            FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None);
+
+        int livingGhosts = 0;
+
+        foreach (EnemyHealth ghost in ghosts)
+        {
+            if (ghost != null && ghost.currentHealth > 0)
+                livingGhosts++;
+        }
+
+        state.AppendLine($"Living ghosts: {livingGhosts}");
+
+        // Wolf status
+        if (wolf != null)
+        {
+            state.AppendLine($"Wolf is companion: {wolf.IsCompanion}");
+            state.AppendLine($"Wolf behaviour: {wolf.currentState}");
+            state.AppendLine($"Wolf hunger: {wolf.Hunger:F0}/100");
+        }
+
+        if (wolfHealth != null)
+        {
+            state.AppendLine(
+                $"Wolf health: {wolfHealth.currentHealth:F0}/{wolfHealth.maxHealth:F0}");
+
+            state.AppendLine($"Wolf is wounded: {wolfHealth.IsWounded}");
+        }
+
+        return state.ToString();
+    }
+
     public void SendPlayerMessage()
     {
         if (!dialogueOpen || isRequesting || playerMessageInput == null)
@@ -259,7 +311,16 @@ public class GuardianInteraction : MonoBehaviour
             {
                 parts = new Part[]
                 {
-                    new Part { text = guardianInstructions }
+                  new Part
+                  {
+                   text = guardianInstructions +
+                           "\n\nCURRENT GAME STATE:\n" +
+                           GetGameState() +
+                           "\nUse this game state when answering. " +
+                           "Treat it as the source of truth. " +
+                           "Never invent game events or claim something happened " +
+                           "unless the game state or player confirms it."
+                  }
                 }
             },
             contents = conversationHistory.ToArray()
