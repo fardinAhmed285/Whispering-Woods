@@ -17,6 +17,7 @@ public class GuardianInteraction : MonoBehaviour
 
     [Header("Dialogue UI")]
     public GameObject dialoguePanel;
+    public TMP_Text guardianMessageText;
     public TMP_Text dialogueText;
     public TMP_InputField playerMessageInput;
     public Button sendButton;
@@ -33,6 +34,30 @@ public class GuardianInteraction : MonoBehaviour
     private bool playerNearby;
     private bool isRequesting;
     private bool dialogueOpen;
+
+    private enum GuardianState
+    {
+        Idle,
+        Warning,
+        WolfConcern,
+        CampfireGuidance,
+        Progress,
+        Victory
+    }
+
+    private GuardianState currentState = GuardianState.Idle;
+
+    [Header("Guardian AI")]
+    public float detectionRadius = 15f;
+    public float eventCheckInterval = 2f;
+
+    public float automaticMessageCooldown = 15f;
+    private float nextAutomaticMessageTime;
+    public float automaticMessageDisplayTime = 6f;
+
+    private float eventCheckTimer;
+    private bool victoryDialogueTriggered;
+    private int lastKnownLitCampfires;
 
     private string conversationDisplay = "";
 
@@ -96,6 +121,9 @@ public class GuardianInteraction : MonoBehaviour
 
         if (sendButton != null)
             sendButton.onClick.AddListener(SendPlayerMessage);
+
+        if (campfireManager != null)
+            lastKnownLitCampfires = campfireManager.LitCampfires;
     }
 
     private void OnDestroy()
@@ -108,6 +136,35 @@ public class GuardianInteraction : MonoBehaviour
 
     private void Update()
     {
+        // Check the guardian's AI at regular intervals.
+        eventCheckTimer += Time.deltaTime;
+
+        if (eventCheckTimer >= eventCheckInterval)
+        {
+            eventCheckTimer = 0f;
+
+            GuardianState newState = EvaluateGuardianState();
+
+            if (newState != currentState)
+            {
+                currentState = newState;
+
+                if (newState != GuardianState.Idle)
+                {
+                    Debug.Log("Eldrin FSM entered state: " + newState);
+
+                    if (!dialogueOpen &&
+                        !isRequesting &&
+                        Time.time >= nextAutomaticMessageTime)
+                    {
+                        nextAutomaticMessageTime =
+                            Time.time + automaticMessageCooldown;
+
+                        StartCoroutine(GetAutomaticGuardianResponse(newState));
+                    }
+                }
+            }
+        }
         if (!playerNearby || Keyboard.current == null)
             return;
 
@@ -264,6 +321,190 @@ public class GuardianInteraction : MonoBehaviour
         }
 
         return state.ToString();
+    }
+
+    private GuardianState EvaluateGuardianState()
+    {
+        if (player == null)
+            return GuardianState.Idle;
+
+        // 1. All campfires restored
+        if (campfireManager != null &&
+            campfireManager.LitCampfires >= campfireManager.totalCampfires)
+        {
+            return GuardianState.Victory;
+        }
+
+        // 2. Ghosts near the player
+        EnemyHealth[] ghosts =
+            FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None);
+
+        foreach (EnemyHealth ghost in ghosts)
+        {
+            if (ghost != null &&
+                ghost.currentHealth > 0 &&
+                Vector3.Distance(player.transform.position,
+                                 ghost.transform.position) <= detectionRadius)
+            {
+                return GuardianState.Warning;
+            }
+        }
+
+        // 3. Wolf needs protection
+        if (wolfHealth != null && wolfHealth.IsWounded)
+            return GuardianState.WolfConcern;
+
+        // 4. A new campfire has been restored
+        if (campfireManager != null &&
+            campfireManager.LitCampfires > lastKnownLitCampfires)
+        {
+            lastKnownLitCampfires = campfireManager.LitCampfires;
+            return GuardianState.Progress;
+        }
+
+        // 5. Player is near an unlit campfire
+        CampfireInteraction[] campfires =
+            FindObjectsByType<CampfireInteraction>(FindObjectsSortMode.None);
+
+        foreach (CampfireInteraction campfire in campfires)
+        {
+            if (campfire != null &&
+                !campfire.IsLit &&
+                Vector3.Distance(player.transform.position,
+                                 campfire.transform.position) <= detectionRadius)
+            {
+                return GuardianState.CampfireGuidance;
+            }
+        }
+
+        return GuardianState.Idle;
+    }
+
+    private string GetStatePrompt(GuardianState state)
+    {
+        switch (state)
+        {
+            case GuardianState.Warning:
+                return "Warn the player that ghosts are nearby. Give a brief survival warning.";
+
+            case GuardianState.WolfConcern:
+                return "The wolf companion is wounded. Advise the player to protect it.";
+
+            case GuardianState.CampfireGuidance:
+                return "The player is near an unlit campfire. Encourage them to restore it.";
+
+            case GuardianState.Progress:
+                return "The player has restored another campfire. Acknowledge their progress.";
+
+            case GuardianState.Victory:
+                return "All campfires have been restored. Deliver a meaningful victory message.";
+
+            default:
+                return "";
+        }
+    }
+
+    private IEnumerator GetAutomaticGuardianResponse(GuardianState state)
+    {
+        if (string.IsNullOrWhiteSpace(apiKey))
+            yield break;
+
+        isRequesting = true;
+
+        string prompt =
+            GetStatePrompt(state) +
+            "\n\nCURRENT GAME STATE:\n" +
+            GetGameState() +
+            "\nSpeak as Eldrin. Use only the supplied game information. " +
+            "Keep the message under 35 words. Do not ask the player a question.";
+
+        RequestData requestData = new RequestData
+        {
+            systemInstruction = new SystemInstruction
+            {
+                parts = new Part[]
+                {
+                new Part { text = guardianInstructions }
+                }
+            },
+            contents = new Content[]
+            {
+            new Content
+            {
+                role = "user",
+                parts = new Part[]
+                {
+                    new Part { text = prompt }
+                }
+            }
+            }
+        };
+
+        string json = JsonUtility.ToJson(requestData);
+
+        string url =
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            + model + ":generateContent";
+
+        using (UnityWebRequest request = new UnityWebRequest(url, "POST"))
+        {
+            request.uploadHandler =
+                new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+
+            request.downloadHandler = new DownloadHandlerBuffer();
+
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("x-goog-api-key", apiKey);
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                ResponseData response =
+                    JsonUtility.FromJson<ResponseData>(
+                        request.downloadHandler.text);
+
+                if (response != null &&
+                    response.candidates != null &&
+                    response.candidates.Length > 0 &&
+                    response.candidates[0].content != null &&
+                    response.candidates[0].content.parts != null &&
+                    response.candidates[0].content.parts.Length > 0)
+                {
+                    string reply =
+                        response.candidates[0].content.parts[0].text;
+
+                    if (guardianMessageText != null)
+                    {
+                        guardianMessageText.text = "Eldrin: " + reply;
+
+                        CancelInvoke(nameof(ClearGuardianMessage));
+                        Invoke(nameof(ClearGuardianMessage), automaticMessageDisplayTime);
+                    }
+
+                    Debug.Log("Eldrin: " + reply);
+                }
+                else
+                {
+                    Debug.LogError("Eldrin received an empty automatic response.");
+                }
+            }
+            else
+            {
+                Debug.LogError(
+                    "Automatic Gemini error: " +
+                    request.responseCode + " " +
+                    request.downloadHandler.text);
+            }
+        }
+
+        isRequesting = false;
+    }
+
+    private void ClearGuardianMessage()
+    {
+        if (guardianMessageText != null)
+            guardianMessageText.text = "";
     }
 
     public void SendPlayerMessage()
