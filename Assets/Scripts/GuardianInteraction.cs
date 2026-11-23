@@ -126,6 +126,12 @@ public class GuardianInteraction : MonoBehaviour
 
         if (campfireManager != null)
             lastKnownLitCampfires = campfireManager.LitCampfires;
+
+        if (guardianMessageText != null)
+        {
+            guardianMessageText.text = "";
+            guardianMessageText.gameObject.SetActive(false);
+        }
     }
 
     private void OnDestroy()
@@ -478,8 +484,8 @@ public class GuardianInteraction : MonoBehaviour
 
                     if (guardianMessageText != null)
                     {
+                        guardianMessageText.gameObject.SetActive(true);
                         guardianMessageText.text = "Eldrin: " + reply;
-
                         CancelInvoke(nameof(ClearGuardianMessage));
                         Invoke(nameof(ClearGuardianMessage), automaticMessageDisplayTime);
                     }
@@ -506,7 +512,10 @@ public class GuardianInteraction : MonoBehaviour
     private void ClearGuardianMessage()
     {
         if (guardianMessageText != null)
+        {
             guardianMessageText.text = "";
+            guardianMessageText.gameObject.SetActive(false);
+        }
     }
 
     private void AddChatMessage(string sender, string message)
@@ -536,6 +545,7 @@ public class GuardianInteraction : MonoBehaviour
 
     public void SendPlayerMessage()
     {
+        Debug.Log("Eldrin: SendPlayerMessage called");
         if (!dialogueOpen || isRequesting || playerMessageInput == null)
             return;
 
