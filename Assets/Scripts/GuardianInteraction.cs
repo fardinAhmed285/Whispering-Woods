@@ -19,6 +19,8 @@ public class GuardianInteraction : MonoBehaviour
     public GameObject dialoguePanel;
     public TMP_Text guardianMessageText;
     public TMP_Text dialogueText;
+    public Transform messageContent;
+    public GameObject messageBubbleTemplate;
     public TMP_InputField playerMessageInput;
     public Button sendButton;
     public ScrollRect dialogueScrollRect;
@@ -507,6 +509,31 @@ public class GuardianInteraction : MonoBehaviour
             guardianMessageText.text = "";
     }
 
+    private void AddChatMessage(string sender, string message)
+    {
+        if (messageContent == null || messageBubbleTemplate == null)
+        {
+            Debug.LogError("Chat UI references are missing.");
+            return;
+        }
+
+        GameObject bubble = Instantiate(
+            messageBubbleTemplate,
+            messageContent
+        );
+
+        bubble.SetActive(true);
+
+        TMP_Text bubbleText = bubble.GetComponentInChildren<TMP_Text>();
+
+        if (bubbleText != null)
+        {
+            bubbleText.text = sender + "\n" + message;
+        }
+
+        ScrollToBottom();
+    }
+
     public void SendPlayerMessage()
     {
         if (!dialogueOpen || isRequesting || playerMessageInput == null)
@@ -519,16 +546,13 @@ public class GuardianInteraction : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            dialogueText.text = "Eldrin: My magic is not connected.";
+            AddChatMessage("Eldrin", "My magic is not connected.");
             return;
         }
 
         playerMessageInput.text = "";
 
-        conversationDisplay += "\n\nYou: " + message;
-        dialogueText.text = conversationDisplay + "\n\nEldrin is thinking...";
-
-        ScrollToBottom();
+        AddChatMessage("You", message);
 
         StartCoroutine(GetGuardianResponse(message));
     }
@@ -610,18 +634,14 @@ public class GuardianInteraction : MonoBehaviour
                         }
                     });
 
-                    conversationDisplay += "\n\nEldrin: " + reply;
-                    dialogueText.text = conversationDisplay;
+                    AddChatMessage("Eldrin", reply);
                 }
                 else
                 {
                     conversationHistory.RemoveAt(
                         conversationHistory.Count - 1);
 
-                    conversationDisplay +=
-                        "\n\nEldrin: I cannot find the words right now.";
-
-                    dialogueText.text = conversationDisplay;
+                    AddChatMessage("Eldrin", "I cannot find the words right now.");
 
                     Debug.LogError("Gemini returned no text.");
                 }
@@ -631,8 +651,10 @@ public class GuardianInteraction : MonoBehaviour
                 conversationHistory.RemoveAt(
                     conversationHistory.Count - 1);
 
-                conversationDisplay +=
-                    "\n\nEldrin: My connection is having trouble. Please try again.";
+                AddChatMessage(
+                    "Eldrin",
+                    "My connection is having trouble. Please try again."
+                );
 
                 dialogueText.text = conversationDisplay;
 
@@ -649,14 +671,14 @@ public class GuardianInteraction : MonoBehaviour
 
     private void ScrollToBottom()
     {
-        if (dialogueScrollRect == null)
+        if (dialogueScrollRect == null || messageContent == null)
             return;
 
         Canvas.ForceUpdateCanvases();
 
-        if (dialogueText != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate(
-                dialogueText.rectTransform);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(
+            messageContent as RectTransform
+        );
 
         Canvas.ForceUpdateCanvases();
 
