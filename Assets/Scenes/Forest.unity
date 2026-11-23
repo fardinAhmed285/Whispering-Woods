@@ -35014,7 +35014,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &871745363
 RectTransform:
   m_ObjectHideFlags: 0
@@ -73590,6 +73590,8 @@ MonoBehaviour:
   dialoguePanel: {fileID: 1857549513}
   guardianMessageText: {fileID: 1991288339}
   dialogueText: {fileID: 1047603156}
+  messageContent: {fileID: 779246793}
+  messageBubbleTemplate: {fileID: 871745362}
   playerMessageInput: {fileID: 1495254508}
   sendButton: {fileID: 674522929}
   dialogueScrollRect: {fileID: 1032227426}
