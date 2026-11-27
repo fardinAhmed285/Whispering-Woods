@@ -73599,6 +73599,7 @@ MonoBehaviour:
   campfireManager: {fileID: 32057121}
   wolf: {fileID: 139260934}
   wolfHealth: {fileID: 139260940}
+  guardianWanderAI: {fileID: 1842540618}
   detectionRadius: 15
   eventCheckInterval: 2
   automaticMessageCooldown: 15

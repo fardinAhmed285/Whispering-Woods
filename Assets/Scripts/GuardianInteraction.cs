@@ -33,6 +33,8 @@ public class GuardianInteraction : MonoBehaviour
     public WolfWander wolf;
     public WolfHealth wolfHealth;
 
+    public GuardianWanderAI guardianWanderAI;
+
     private bool playerNearby;
     private bool isRequesting;
     private bool dialogueOpen;
@@ -208,6 +210,11 @@ public class GuardianInteraction : MonoBehaviour
     {
         dialogueOpen = true;
 
+        if (guardianWanderAI != null && player != null)
+        {
+            guardianWanderAI.StartTalking(player.transform);
+        }
+
         if (dialoguePanel != null)
             dialoguePanel.SetActive(true);
 
@@ -240,6 +247,11 @@ public class GuardianInteraction : MonoBehaviour
             return;
 
         dialogueOpen = false;
+
+        if (guardianWanderAI != null)
+        {
+            guardianWanderAI.EndTalking();
+        }
 
         if (dialoguePanel != null)
             dialoguePanel.SetActive(false);
